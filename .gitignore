@@ -31,3 +31,4 @@
 *.sdf
 *.opensdf
 *.user
+*.vcxproj.user

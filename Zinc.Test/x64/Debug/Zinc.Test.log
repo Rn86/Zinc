@@ -1,0 +1,11 @@
+﻿Build started 12/6/2015 11:36:37 PM.
+     1>Project "C:\radonfx\VisualStudio\WorkSpace\Project\Zinc\Zinc.Test\Zinc.Test.vcxproj" on node 3 (Build target(s)).
+     1>ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\x86_amd64\CL.exe /c /I"C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\UnitTest\include" /ZI /nologo /W3 /WX- /Od /D _DEBUG /D _WINDLL /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Zc:inline /Yc"stdafx.h" /Fp"x64\Debug\Zinc.Test.pch" /Fo"x64\Debug\\" /Fd"x64\Debug\vc140.pdb" /Gd /TP /FC /errorReport:prompt stdafx.cpp
+         stdafx.cpp
+     1>c:\radonfx\visualstudio\workspace\project\zinc\zinc.test\stdafx.h(13): fatal error C1083: Cannot open include file: 'Zinc.hpp': No such file or directory
+     1>Done Building Project "C:\radonfx\VisualStudio\WorkSpace\Project\Zinc\Zinc.Test\Zinc.Test.vcxproj" (Build target(s)) -- FAILED.
+
+Build FAILED.
+
+Time Elapsed 00:00:00.68

@@ -126,9 +126,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Core\Defs.hpp" />
     <ClInclude Include="Expression.hpp" />
-    <ClInclude Include="Math\Expression.hpp" />
     <ClInclude Include="Zinc.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -245,6 +245,54 @@ namespace Zinc
 		}
 	};
 
+	template <int p, bool s>
+	struct PowBase
+	{
+		template <typename T>
+		static inline auto Get(const T & value)
+		{
+			return value * Pow<p - 1>::Get(value);
+		}
+	};
+	template <int p>
+	struct PowBase<p, true>
+	{
+		template <typename T>
+		static inline auto Get(const T & value)
+		{
+			return 1 / PowBase<p, false>::Get(value);
+		}
+	};
+	template <bool s>
+	struct PowBase<0, s>
+	{
+		template <typename T>
+		static inline auto Get(const T &)
+		{
+			return 1;
+		}
+	};
+
+
+	template<int p>
+	struct Pow : PowBase < p, p < 0>{};
+
+	template <int p>
+	struct Power
+	{
+	public:
+		template <typename T>
+		auto operator()(const T && operand) const
+		{
+			return Pow<p>::Get(operand);
+		}
+
+		operator std::string() const
+		{
+			return "^";
+		}
+	};
+
 	template <class Operator, class Operand>
 	struct UnaryExpression : Expression<UnaryExpression<Operator, Operand> >
 	{
@@ -708,6 +756,12 @@ namespace Zinc
 	static inline BinarryExpression<Division, typename ExpressionOperator<Lhs>::type, typename ExpressionOperator<Rhs>::type> operator/(const Lhs& d1, const Rhs& d2)
 	{
 		return{ ExpressionOperator<Lhs>::GetParam(d1), ExpressionOperator<Rhs>::GetParam(d2) };
+	}
+
+	template <int p, typename T>
+	static inline FunctionExpression<Power<p>, T>  pow(const T & base)
+	{
+		return{ base };
 	}
 }
 

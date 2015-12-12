@@ -14,6 +14,12 @@
     <ClInclude Include="Zinc.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Core\Defs.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Math\Expression.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="Expression.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>

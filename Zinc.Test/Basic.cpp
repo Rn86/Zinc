@@ -213,6 +213,16 @@ namespace Zinc { namespace Tests {
 			Assert::IsTrue(expected == actual);
 		}
 
+		ZN_TEST_METHOD(BasicPower)
+		{
+			auto a = Numeric <int>(2);
+			auto expr = pow<3>(a);
+
+			int expected = 8;
+			int actual = expr();
+			
+			Assert::IsTrue(expected == actual);
+		}
 	};
 
 }}

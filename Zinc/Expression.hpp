@@ -273,6 +273,16 @@ namespace Zinc
 		}
 	};
 
+	template <unsigned int I>
+	struct Factorial {
+		static const unsigned int value = I * Factorial<I - 1>::value;
+	};
+	template<>
+	struct Factorial<0>
+	{
+		static const unsigned int value = 1;
+	};
+
 
 	template<int p>
 	struct Pow : PowBase < p, p < 0>{};

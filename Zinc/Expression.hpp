@@ -230,13 +230,30 @@ namespace Zinc
 		}
 	};
 
+	template <typename T1, typename T2, bool fund>
+	struct Div
+	{
+		static inline auto Get(const T1 & lhs, const T2 & rhs)
+		{
+			return lhs / rhs;
+		}
+	};
+	template <typename T1, typename T2>
+	struct Div<T1, T2, true>
+	{
+		static inline auto Get(const T1 & lhs, const T2 & rhs)
+		{
+			return (long double)lhs / (long double)rhs;
+		}
+	};
+
 	struct Division
 	{
 	public:
 		template <typename T1, typename T2>
 		auto operator()(const T1 && lhs, const T2 && rhs) const
 		{
-			return lhs / rhs;
+			return Div<T1, T2, std::is_fundamental<T1>::value || std::is_fundamental<T2>::value>::Get(lhs, rhs);
 		}
 
 		operator std::string() const
@@ -245,8 +262,27 @@ namespace Zinc
 		}
 	};
 
+	template <std::uintmax_t f>
+	struct Factorial
+	{
+		static constexpr std::uintmax_t value = f * Factorial<f - 1>::value;
+	};
+	template<>
+	struct Factorial<0>
+	{
+		static const std::uintmax_t value = 1;
+	};
+
+	template <std::uintmax_t f>
+	static inline auto factorial()
+	{
+		return Factorial<f>::value;
+	}
+
 	template <int p, bool s>
-	struct PowBase
+	struct PowBase;
+	template <int p>
+	struct PowBase<p, false>
 	{
 		template <typename T>
 		static inline auto Get(const T & value)
@@ -260,11 +296,20 @@ namespace Zinc
 		template <typename T>
 		static inline auto Get(const T & value)
 		{
-			return 1 / PowBase<p, false>::Get(value);
+			return 1 / PowBase<-p, false>::Get(value);
 		}
 	};
-	template <bool s>
-	struct PowBase<0, s>
+	template <>
+	struct PowBase<0, true>
+	{
+		template <typename T>
+		static inline auto Get(const T &)
+		{
+			return 1;
+		}
+	};
+	template <>
+	struct PowBase<0, false>
 	{
 		template <typename T>
 		static inline auto Get(const T &)
@@ -273,19 +318,14 @@ namespace Zinc
 		}
 	};
 
-	template <unsigned int I>
-	struct Factorial {
-		static const unsigned int value = I * Factorial<I - 1>::value;
-	};
-	template<>
-	struct Factorial<0>
+	template <int p>
+	struct IsNegative
 	{
-		static const unsigned int value = 1;
+		static const bool value = p < 0;
 	};
-
 
 	template<int p>
-	struct Pow : PowBase < p, p < 0>{};
+	struct Pow : PowBase<p, IsNegative<p>::value>{};
 
 	template <int p>
 	struct Power
@@ -299,7 +339,9 @@ namespace Zinc
 
 		operator std::string() const
 		{
-			return "^";
+			std::ostringstream ss;
+			ss << "^" << p;
+			return ss.str();
 		}
 	};
 
@@ -323,6 +365,35 @@ namespace Zinc
 			ss << "(";
 			ss << (std::string)m_operation;
 			ss << (std::string)m_operand;
+			ss << ")";
+			return ss.str();
+		}
+
+		Operator m_operation;
+		Operand m_operand;
+	};
+
+	template <class Operator, class Operand>
+	struct PosfixExpression : Expression<PosfixExpression<Operator, Operand> >
+	{
+	public:
+		PosfixExpression(const Operand& operand)
+			: m_operand(operand)
+		{
+		}
+
+		auto operator()() const
+		{
+			return m_operation(m_operand());
+		}
+
+		operator std::string() const
+		{
+			std::ostringstream ss;
+			ss << "((";
+			ss << (std::string)m_operand;
+			ss << ")";
+			ss << (std::string)m_operation;
 			ss << ")";
 			return ss.str();
 		}
@@ -389,6 +460,33 @@ namespace Zinc
 		T m_operand;
 		F m_function;
 	};
+	
+	template <typename T, bool fund>
+	struct ExpressionOperatorBase
+	{
+		typedef T type;
+		static inline type GetParam(const Expression<T>& arg)
+		{
+			return arg();
+		}
+	};
+	template <typename T>
+	struct ExpressionOperatorBase<T, false>
+	{
+		typedef Numeric<T> type;
+		static inline type GetParam(const T& arg)
+		{
+			return{ arg };
+		}
+	};
+	template <typename T>
+	struct ExpressionOperator : ExpressionOperatorBase<T, std::is_base_of<Expression<T>, T>::value > { };
+
+	template <int p, typename T>
+	static inline PosfixExpression<Power<p>, typename ExpressionOperator<T>::type> power(const T & value)
+	{
+		return{ ExpressionOperator<T>::GetParam(value) };
+	}
 
 	template <typename T>
 	struct HasVariables
@@ -687,26 +785,61 @@ namespace Zinc
 		}
 	};
 
-	template <typename T, bool fund>
-	struct ExpressionOperatorBase
+	template <size_t terms, typename T>
+	struct TaylorSineTerm
 	{
-		typedef T type;
-		static inline type GetParam(const Expression<T>& arg)
+		static inline auto Get(const T & x)
 		{
-			return arg();
+			return (power<terms>(-1) / factorial<(2 * terms) + 1>()) * power<(2 * terms) + 1>(x);
 		}
 	};
-	template <typename T>
-	struct ExpressionOperatorBase<T, false>
+
+	template<size_t terms, typename T>
+	struct TaylorSine
 	{
-		typedef Numeric<T> type;
-		static inline type GetParam(const T& arg)
+		static inline auto Get(const T & x)
 		{
-			return{ arg };
+			return TaylorSineTerm<terms, T>::Get(x) + // current term
+				TaylorSine<terms - 1, T>::Get(x);     // rest of terms
 		}
 	};
+
 	template <typename T>
-	struct ExpressionOperator : ExpressionOperatorBase<T, std::is_base_of<Expression<T>, T>::value > { };
+	struct TaylorSine<0, T>
+	{
+		static inline auto Get(const T & x)
+		{
+			return TaylorSineTerm<0, T>::Get(x);
+		}
+	};
+
+
+	template <size_t terms, class T>
+	struct Expander;
+
+	template <size_t terms, class T>
+	struct Expander<terms, Expression<T>>
+	{
+		static inline auto Expand(const T & exp)
+		{
+			return Series<terms, T>::Get(exp());
+		}
+	};
+
+	template <size_t terms, class T>
+	struct Expander<terms, FunctionExpression<Sinus, T>>
+	{
+		static inline auto Expand(const FunctionExpression<Sinus, T> & exp)
+		{
+			return TaylorSine<terms, T>::Get(exp.m_operand);
+		}
+	};
+	
+	template <size_t terms, class T>
+	static inline auto expand(const T & exp)
+	{
+		return Expander<terms, T>::Expand(exp);
+	}
 
 	template <class T, typename T1, typename T2>
 	static inline typename Binder<T, T1, typename ExpressionOperator<T2>::type>::type Bind(const Expression<T> & expr, const T1& var, const T2& value)
@@ -766,12 +899,6 @@ namespace Zinc
 	static inline BinarryExpression<Division, typename ExpressionOperator<Lhs>::type, typename ExpressionOperator<Rhs>::type> operator/(const Lhs& d1, const Rhs& d2)
 	{
 		return{ ExpressionOperator<Lhs>::GetParam(d1), ExpressionOperator<Rhs>::GetParam(d2) };
-	}
-
-	template <int p, typename T>
-	static inline FunctionExpression<Power<p>, T>  pow(const T & base)
-	{
-		return{ base };
 	}
 }
 

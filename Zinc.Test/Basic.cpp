@@ -19,8 +19,8 @@ namespace Zinc { namespace Tests {
 		{
 			auto x = Numeric<int>(3);
 			auto expr = (x + (2 + x) - 1) / (2 * x + 1);
-			size_t expected = 1;
-			size_t actual = expr();
+			long double expected = 1;
+			long double actual = expr();
 			Assert::IsTrue(expected == actual);
 		}
 
@@ -46,8 +46,8 @@ namespace Zinc { namespace Tests {
 			auto expr = (_a + (2 + _a) - _b) / (2 * _a + 1);
 			auto bind1 = Bind(expr, _a, 3);
 			auto bind2 = Bind(bind1, _b, 1);
-			size_t expected = 1;
-			size_t actual = bind2();
+			long double expected = 1;
+			long double actual = bind2();
 			Assert::IsTrue(expected == actual);
 		}
 
@@ -211,6 +211,64 @@ namespace Zinc { namespace Tests {
 			std::string expected = "(sin(b)+1)";
 			std::string actual = bind;
 			Assert::IsTrue(expected == actual);
+		}
+
+		ZN_TEST_METHOD(PowerTest1)
+		{
+			auto expr = power<-2>(2);
+			auto expected = 1 / 4;
+			auto actual = expr();
+			Assert::IsTrue(expected == actual);
+		}
+
+		ZN_TEST_METHOD(PowerTest2)
+		{
+			auto expr = power<2>(-2);
+			auto expected = 4;
+			auto actual = expr();
+			Assert::IsTrue(expected == actual);
+		}
+
+		ZN_TEST_METHOD(PowerTest3)
+		{
+			auto expr = power<3>(2) / factorial<3>();
+			auto expected = 4.0f / 3.0f;
+			auto actual = expr();
+			Assert::IsTrue(expected == actual);
+		}
+
+		ZN_TEST_METHOD(PowerTest4)
+		{
+			auto expr = power<5>(-1);
+			auto expected = -1;
+			auto actual = expr();
+			Assert::IsTrue(expected == actual);
+		}
+
+		//(((((-1)^1)/6)*((2)^3))+((((-1)^0)/1)*((2)^1)))
+
+		ZN_TEST_METHOD(ExpandIssue1)
+		{
+			auto expr = (power<1>(-1) / 6) * power<3>(2);
+			auto expected = 4 / 3;
+			auto actual = expr();
+			Assert::IsTrue(expected == actual);
+		}
+
+		ZN_TEST_METHOD(ExpandIssue2)
+		{
+			auto expr = power<1>(-1) / 6;
+			auto expected = 1 / 6;
+			auto actual = expr();
+			Assert::IsTrue(expected == actual);
+		}
+
+		ZN_TEST_METHOD(SeriesTest1)
+		{
+			auto expr = sin(_pi / 2);
+			auto expan = expand<10>(expr);
+			auto expected = 1;
+			auto actual = expan();
 		}
 
 	};

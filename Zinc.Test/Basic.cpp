@@ -126,24 +126,6 @@ namespace Zinc { namespace Tests {
 			Assert::IsTrue(expected == actual);
 		}
 
-		ZN_TEST_METHOD(BindTangent)
-		{
-			auto expr = tan(_a) + _b;
-			auto bind = Bind(expr, _a, 2);
-			std::string expected = "(tan(2)+b)";
-			std::string actual = bind;
-			Assert::IsTrue(expected == actual);
-		}
-
-		ZN_TEST_METHOD(BindTangent2)
-		{
-			auto expr = tan(_a) + _b;
-			auto bind = Bind(expr, _b, -2);
-			std::string expected = "(tan(a)-2)";
-			std::string actual = bind;
-			Assert::IsTrue(expected == actual);
-		}
-
 		ZN_TEST_METHOD(UnaryOperatorAdditionBind)
 		{
 			auto expr = ++_a;

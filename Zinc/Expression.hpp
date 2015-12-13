@@ -8,6 +8,9 @@
 
 namespace Zinc
 {
+	template <size_t terms, class T>
+	struct Expander;
+
 	template <typename T>
 	struct TypeTraits;
 
@@ -287,7 +290,7 @@ namespace Zinc
 		template <typename T>
 		static inline auto Get(const T & value)
 		{
-			return value * Pow<p - 1>::Get(value);
+			return value * PowBase<p - 1, false>::Get(value);
 		}
 	};
 	template <int p>
@@ -325,7 +328,7 @@ namespace Zinc
 	};
 
 	template<int p>
-	struct Pow : PowBase<p, IsNegative<p>::value>{};
+	struct Pow : PowBase<p, IsNegative<p>::value> {};
 
 	template <int p>
 	struct Power
@@ -460,7 +463,7 @@ namespace Zinc
 		T m_operand;
 		F m_function;
 	};
-	
+
 	template <typename T, bool fund>
 	struct ExpressionOperatorBase
 	{
@@ -486,12 +489,6 @@ namespace Zinc
 	static inline PosfixExpression<Power<p>, typename ExpressionOperator<T>::type> power(const T & value)
 	{
 		return{ ExpressionOperator<T>::GetParam(value) };
-	}
-
-	template <typename T>
-	static inline auto ln(const T & value)
-	{
-		return TaylorLn<5, T>::Get(value);
 	}
 
 	template <typename T>
@@ -524,192 +521,6 @@ namespace Zinc
 	{
 		static constexpr bool value = HasVariables<T2>::value;
 	};
-
-	struct Sinus
-	{
-	public:
-		template <typename T>
-		auto operator()(const T && operand) const
-		{
-			return Sin<HasVariables<T>::value>::Operate(operand);
-		}
-
-		template <typename T>
-		auto operator()(const Expression<T> && operand) const
-		{
-			return Sin<HasVariables<T>::value>::Operate(operand());
-		}
-
-		operator std::string() const
-		{
-			return "sin";
-		}
-
-	private:
-		template <bool vars>
-		struct Sin
-		{
-			template <typename T>
-			static inline auto Operate(const T & value)
-			{
-				return ::sin(value);
-			}
-
-			static inline auto Operate(float value)
-			{
-				return ::sinf(value);
-			}
-
-			static inline auto Operate(double value)
-			{
-				return ::sin(value);
-			}
-
-			static inline auto Operate(long double value)
-			{
-				return ::sinl(value);
-			}
-		};
-		template <>
-		struct Sin<true>
-		{
-			template <typename T>
-			static inline FunctionExpression<Sinus, T> Operate(const Expression<T> & expr)
-			{
-				return{ expr() };
-			}
-		};
-	};
-
-	struct Cosinus
-	{
-	public:
-		template <typename T>
-		auto operator()(const T && operand) const
-		{
-			return Cos<HasVariables<T>::value>::Operate(operand);
-		}
-
-		template <typename T>
-		auto operator()(const Expression<T> && operand) const
-		{
-			return Cos<HasVariables<T>::value>::Operate(operand());
-		}
-
-		operator std::string() const
-		{
-			return "cos";
-		}
-
-	private:
-		template <bool vars>
-		struct Cos
-		{
-			template <typename T>
-			static inline auto Operate(const T & value)
-			{
-				return ::cos(value);
-			}
-
-			static inline auto Operate(float value)
-			{
-				return ::cosf(value);
-			}
-
-			static inline auto Operate(double value)
-			{
-				return ::cos(value);
-			}
-
-			static inline auto Operate(long double value)
-			{
-				return ::cosl(value);
-			}
-		};
-		template <>
-		struct Cos<true>
-		{
-			template <typename T>
-			static inline FunctionExpression<Cosinus, T> Operate(const Expression<T> & expr)
-			{
-				return{ expr() };
-			}
-		};
-	};
-
-	struct Tangent
-	{
-	public:
-		template <typename T>
-		auto operator()(const T && operand) const
-		{
-			return Tan<HasVariables<T>::value>::Operate(operand);
-		}
-
-		template <typename T>
-		auto operator()(const Expression<T> && operand) const
-		{
-			return Tan<HasVariables<T>::value>::Operate(operand());
-		}
-
-		operator std::string() const
-		{
-			return "tan";
-		}
-
-	private:
-		template <bool vars>
-		struct Tan
-		{
-			template <typename T>
-			static inline auto Operate(const T & value)
-			{
-				return ::tan(value);
-			}
-
-			static inline auto Operate(float value)
-			{
-				return ::tanf(value);
-			}
-
-			static inline auto Operate(double value)
-			{
-				return ::tan(value);
-			}
-
-			static inline auto Operate(long double value)
-			{
-				return ::tanl(value);
-			}
-		};
-		template <>
-		struct Tan<true>
-		{
-			template <typename T>
-			static inline FunctionExpression<Tangent, T> Operate(const Expression<T> & expr)
-			{
-				return{ expr() };
-			}
-		};
-	};
-
-	template <typename T>
-	static inline FunctionExpression<Sinus, T> sin(const T& operand)
-	{
-		return{ operand };
-	}
-
-	template <typename T>
-	static inline FunctionExpression<Cosinus, T> cos(const T& operand)
-	{
-		return{ operand };
-	}
-
-	template <typename T>
-	static inline FunctionExpression<Tangent, T> tan(const T& operand)
-	{
-		return{ operand };
-	}
 
 	template <typename T1, intmax_t N, intmax_t D, typename T2, typename T3>
 	struct Binder<Constant<T1, N, D>, T2, T3>
@@ -871,7 +682,7 @@ namespace Zinc
 	{
 		static inline auto Get(const T & x)
 		{
-			return (power<terms+1>(-1) / terms) * power<(terms)>(-1 + x);
+			return (power<terms + 1>(-1) / terms) * power<(terms)>(-1 + x);
 		}
 	};
 	template<size_t terms, typename T>
@@ -891,16 +702,60 @@ namespace Zinc
 		}
 	};
 
+	template <typename T>
+	static inline auto ln(const T & value)
+	{
+		return TaylorLn<5, T>::Get(value);
+	}
 
+	struct Sinus
+	{
+	public:
+		template <typename T>
+		auto operator()(const T && operand) const
+		{
+			return Expander<5, FunctionExpression<Sinus, T>>::Expand(operand)();
+		}
 
-	template <size_t terms, class T>
-	struct Expander;
+		operator std::string() const
+		{
+			return "sin";
+		}
+	};
+
+	struct Cosinus
+	{
+	public:
+		template <typename T>
+		auto operator()(const T && operand) const
+		{
+			return Expander<5, FunctionExpression<Cosinus, T>>::Expand(operand)();
+		}
+
+		operator std::string() const
+		{
+			return "cos";
+		}
+	};
+
+	template <typename T>
+	static inline FunctionExpression<Sinus, T> sin(const T& operand)
+	{
+		return{ operand };
+	}
+
+	template <typename T>
+	static inline FunctionExpression<Cosinus, T> cos(const T& operand)
+	{
+		return{ operand };
+	}
+
 	template <size_t terms, class T>
 	struct Expander<terms, Expression<T>>
 	{
 		static inline auto Expand(const T & exp)
 		{
-			return Series<terms, T>::Get(exp());
+			return Expander<terms, T>::Get(exp());
 		}
 	};
 	template <size_t terms, class T>
@@ -919,7 +774,7 @@ namespace Zinc
 			return TaylorCosine<terms, T>::Get(exp.m_operand);
 		}
 	};
-	
+
 	template <size_t terms, class T>
 	static inline auto expand(const T & exp)
 	{
@@ -987,7 +842,7 @@ namespace Zinc
 	}
 
 	template <typename T>
-	static inline auto operator^(const Constant<long double, 271828182845904, 100000000000000> & e, const T & pow)
+	static inline auto operator^(const Constant<long double, 271828182845904, 100000000000000> &, const T & pow)
 	{
 		return TaylorE<5, T>::Get(pow);
 	}

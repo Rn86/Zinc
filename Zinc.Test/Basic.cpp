@@ -266,9 +266,37 @@ namespace Zinc { namespace Tests {
 		ZN_TEST_METHOD(SeriesTest1)
 		{
 			auto expr = sin(_pi / 2);
-			auto expan = expand<10>(expr);
+			auto expan = expand<5>(expr);
 			auto expected = 1;
 			auto actual = expan();
+			Assert::IsTrue(expected == actual);
+		}
+
+		ZN_TEST_METHOD(SeriesTest2)
+		{
+			auto expr = cos(_pi);
+			auto expan = expand<5>(expr);
+			auto expected = -1;
+			auto actual = expan();
+			Assert::IsTrue(expected == actual);
+		}
+
+		ZN_TEST_METHOD(SeriesTest3)
+		{
+			auto expr = _e ^ 2;
+			auto expected = 7.3890560989306502272304274605750L;
+			auto actual = expr();
+			std::string string = expr;
+			Assert::IsTrue(expected == actual);
+		}
+
+		ZN_TEST_METHOD(SeriesTest4)
+		{
+			auto expr = ln(1.5);
+			auto expected = 0;
+			auto actual = expr();
+			std::string string = expr;
+			Assert::IsTrue(expected == actual);
 		}
 
 	};

@@ -489,6 +489,12 @@ namespace Zinc
 	}
 
 	template <typename T>
+	static inline auto ln(const T & value)
+	{
+		return TaylorLn<5, T>::Get(value);
+	}
+
+	template <typename T>
 	struct HasVariables
 	{
 		static constexpr bool value = false;
@@ -793,17 +799,14 @@ namespace Zinc
 			return (power<terms>(-1) / factorial<(2 * terms) + 1>()) * power<(2 * terms) + 1>(x);
 		}
 	};
-
 	template<size_t terms, typename T>
 	struct TaylorSine
 	{
 		static inline auto Get(const T & x)
 		{
-			return TaylorSineTerm<terms, T>::Get(x) + // current term
-				TaylorSine<terms - 1, T>::Get(x);     // rest of terms
+			return TaylorSineTerm<terms, T>::Get(x) + TaylorSine<terms - 1, T>::Get(x);
 		}
 	};
-
 	template <typename T>
 	struct TaylorSine<0, T>
 	{
@@ -813,10 +816,85 @@ namespace Zinc
 		}
 	};
 
+	template <size_t terms, typename T>
+	struct TaylorCosineTerm
+	{
+		static inline auto Get(const T & x)
+		{
+			return (power<terms>(-1) / factorial<(2 * terms)>()) * power<(2 * terms)>(x);
+		}
+	};
+	template<size_t terms, typename T>
+	struct TaylorCosine
+	{
+		static inline auto Get(const T & x)
+		{
+			return TaylorCosineTerm<terms, T>::Get(x) + TaylorCosine<terms - 1, T>::Get(x);
+		}
+	};
+	template <typename T>
+	struct TaylorCosine<0, T>
+	{
+		static inline auto Get(const T & x)
+		{
+			return TaylorCosineTerm<0, T>::Get(x);
+		}
+	};
+
+	template <size_t terms, typename T>
+	struct TaylorETerm
+	{
+		static inline auto Get(const T & x)
+		{
+			return power<(terms)>(x) / factorial<(terms)>();
+		}
+	};
+	template<size_t terms, typename T>
+	struct TaylorE
+	{
+		static inline auto Get(const T & x)
+		{
+			return TaylorETerm<terms, T>::Get(x) + TaylorE<terms - 1, T>::Get(x);
+		}
+	};
+	template <typename T>
+	struct TaylorE<0, T>
+	{
+		static inline auto Get(const T & x)
+		{
+			return TaylorETerm<0, T>::Get(x);
+		}
+	};
+
+	template <size_t terms, typename T>
+	struct TaylorLnTerm
+	{
+		static inline auto Get(const T & x)
+		{
+			return (power<terms+1>(-1) / terms) * power<(terms)>(-1 + x);
+		}
+	};
+	template<size_t terms, typename T>
+	struct TaylorLn
+	{
+		static inline auto Get(const T & x)
+		{
+			return TaylorLnTerm<terms, T>::Get(x) + TaylorLn<terms - 1, T>::Get(x);
+		}
+	};
+	template <typename T>
+	struct TaylorLn<1, T>
+	{
+		static inline auto Get(const T & x)
+		{
+			return TaylorLnTerm<1, T>::Get(x);
+		}
+	};
+
+
 
 	template <size_t terms, class T>
 	struct Expander;
-
 	template <size_t terms, class T>
 	struct Expander<terms, Expression<T>>
 	{
@@ -825,13 +903,20 @@ namespace Zinc
 			return Series<terms, T>::Get(exp());
 		}
 	};
-
 	template <size_t terms, class T>
 	struct Expander<terms, FunctionExpression<Sinus, T>>
 	{
 		static inline auto Expand(const FunctionExpression<Sinus, T> & exp)
 		{
 			return TaylorSine<terms, T>::Get(exp.m_operand);
+		}
+	};
+	template <size_t terms, class T>
+	struct Expander<terms, FunctionExpression<Cosinus, T>>
+	{
+		static inline auto Expand(const FunctionExpression<Cosinus, T> & exp)
+		{
+			return TaylorCosine<terms, T>::Get(exp.m_operand);
 		}
 	};
 	
@@ -899,6 +984,12 @@ namespace Zinc
 	static inline BinarryExpression<Division, typename ExpressionOperator<Lhs>::type, typename ExpressionOperator<Rhs>::type> operator/(const Lhs& d1, const Rhs& d2)
 	{
 		return{ ExpressionOperator<Lhs>::GetParam(d1), ExpressionOperator<Rhs>::GetParam(d2) };
+	}
+
+	template <typename T>
+	static inline auto operator^(const Constant<long double, 271828182845904, 100000000000000> & e, const T & pow)
+	{
+		return TaylorE<5, T>::Get(pow);
 	}
 }
 

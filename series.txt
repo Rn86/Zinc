@@ -1,18 +1,25 @@
 // sin
 template <unsigned term>
 inline double taylor_sine_term(double const& x) {
-    return (power<term>(-1) / factorial<(2*term)+1>::value) * power<(2*term)+1>(x);
+    return (power<term>(-1) / factorial<(2*term)+1>::value) * power<(2*term)>(x);
 }
 
 template<unsigned terms>
 inline double taylor_sine(double const& x) {
-    return taylor_sine_term<terms>(x) + // current term
-           taylor_sine<terms-1>(x);     // rest of terms
+    return taylor_sine<terms, true>(x);
+}
+
+template<unsigned terms, bool first>
+inline double taylor_sine(double const& x) {
+    return first? x * (taylor_sine_term<terms>(x) + // current term
+           taylor_sine<terms-1, false>(x)):
+           taylor_sine_term<terms>(x) + // current term
+           taylor_sine<terms-1, false>(x);     // rest of terms
 }
 
 template <>
 inline double taylor_sine<0>(const double& x) {
-    return taylor_sine_term<0>(x);
+    return taylor_sine_term<0>(1);
 }
 
 //===================================
@@ -61,7 +68,7 @@ inline double taylor_e<0>(const double& x) {
 
 template <unsigned term>
 inline double taylor_ln_term(double const& x) {
-    return (power<term>(-1) / term * power<(term)>(-1+x);
+    return (power<term+1>(-1) / term * power<(term)>(-1+x);
 }
 
 template<unsigned terms>

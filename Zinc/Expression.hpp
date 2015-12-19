@@ -775,6 +775,14 @@ namespace Zinc
 		}
 	};
 
+	template <typename T>
+	static auto getLimit(double value, const T& exp)
+	{
+		auto bind = Bind(exp, _x, value);
+		return bind();
+		//return (Bind(exp, _x, value))();
+	};
+
 	template <size_t terms, class T>
 	static inline auto expand(const T & exp)
 	{

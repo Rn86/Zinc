@@ -281,6 +281,12 @@ namespace Zinc { namespace Tests {
 			Assert::IsTrue(expected == actual);
 		}
 
+		ZN_TEST_METHOD(LimitTest1)
+		{
+			// std::numeric_limits<double>::infinity()
+			auto limit = getLimit(std::numeric_limits<double>::infinity() ,_x/_x);
+			Assert::IsTrue(std::isinf(limit));
+		}
 	};
 
 }}

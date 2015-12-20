@@ -24,6 +24,9 @@ namespace Zinc
 	struct Binder;
 
 	template <class T>
+	struct Derivation;
+
+	template <class T>
 	struct Simplifier;
 
 	template <class T>
@@ -582,6 +585,16 @@ namespace Zinc
 		}
 	};
 
+	template <int p, class T, class T1, typename T2>
+	struct Binder<PosfixExpression<Power<p>, T>, T1, T2>
+	{
+		typedef PosfixExpression<Power<p>, typename Binder<T, T1, T2>::type> type;
+		static inline type Bind(const PosfixExpression<Power<p>, T> & exp, const T1& var, const T2& value)
+		{
+			return{ Binder<T, T1, T2>::Bind(exp.m_operand, var, value) };
+		}
+	};
+
 	template <class F, class T1, class T2, typename T3>
 	struct Binder<FunctionExpression<F, T1>, T2, T3>
 	{
@@ -739,15 +752,15 @@ namespace Zinc
 	};
 
 	template <typename T>
-	static inline FunctionExpression<Sinus, T> sin(const T& operand)
+	static inline FunctionExpression<Sinus, typename ExpressionOperator<T>::type> sin(const T& operand)
 	{
-		return{ operand };
+		return{ ExpressionOperator<T>::GetParam(operand) };
 	}
 
 	template <typename T>
-	static inline FunctionExpression<Cosinus, T> cos(const T& operand)
+	static inline FunctionExpression<Cosinus, typename ExpressionOperator<T>::type> cos(const T& operand)
 	{
-		return{ operand };
+		return{ ExpressionOperator<T>::GetParam(operand) };
 	}
 
 	template <size_t terms, class T>
@@ -778,8 +791,13 @@ namespace Zinc
 	template <typename T>
 	static auto getLimit(double value, const T& exp)
 	{
+
 		auto bind = Bind(exp, _x, value);
-		return bind();
+
+		//auto gg = bind();
+		std::string aa = exp;
+
+		return aa;
 		//return (Bind(exp, _x, value))();
 	};
 
@@ -799,6 +817,162 @@ namespace Zinc
 	struct Simplifier
 	{
 
+	};
+
+
+
+	template <class T>
+	static inline typename Derivation<T>::type derive(const Expression<T> & exp)
+	{
+		return Derivation<T>::Derive(exp());
+	}
+
+	template <class T>
+	struct Derivation<Expression<T>>
+	{
+		typedef typename Derivation<T>::type type;
+		static inline type Derive(const T& exp)
+		{
+			return Derivation<T>::Derive(exp);
+		}
+	};
+
+	template <class T1, class T2>
+	struct Derivation<BinarryExpression<Addition,T1,T2>>
+	{
+		typedef typename BinarryExpression<Addition,typename Derivation<T1>::type,typename Derivation<T2>::type> type;
+		static inline type Derive(const BinarryExpression<Addition,T1,T2> & exp)
+		{
+			return Derivation<T1>::Derive(exp.m_leftOperand) + Derivation<T2>::Derive(exp.m_rightOperand);
+		}
+	};
+
+	template <class T1, class T2>
+	struct Derivation<BinarryExpression<Subtraction, T1, T2>>
+	{
+		typedef typename BinarryExpression<Subtraction, typename Derivation<T1>::type, typename Derivation<T2>::type> type;
+		static inline type Derive(const BinarryExpression<Subtraction, T1, T2> & exp)
+		{
+			return Derivation<T1>::Derive(exp.m_leftOperand) - Derivation<T2>::Derive(exp.m_rightOperand);
+		}
+	};
+
+	template <class T1, class T2>
+	struct Derivation<BinarryExpression<Multiplication, T1, T2>>
+	{
+		typedef typename
+			BinarryExpression<
+				Addition,
+				BinarryExpression<
+					Multiplication,
+					typename Derivation<T1>::type,
+					T2
+				>,
+				BinarryExpression<
+					Multiplication,
+					T1,
+					typename Derivation<T2>::type
+				>
+			> type;
+		static inline type Derive(const BinarryExpression<Multiplication, T1, T2> & exp)
+		{
+			return Derivation<T1>::Derive(exp.m_leftOperand)*exp.m_rightOperand +
+				exp.m_leftOperand*Derivation<T2>::Derive(exp.m_rightOperand);
+		}
+	};
+
+	template <class T1, class T2>
+	struct Derivation<BinarryExpression<Division, T1, T2>>
+	{
+		typedef typename BinarryExpression<Division, typename Derivation<T1>::type, typename Derivation<T2>::type> type;
+		static inline type Derive(const BinarryExpression<Division, T1, T2> & exp)
+		{
+			return (Derivation<T1>::Derive(exp.m_leftOperand)*exp.m_rightOperand -
+				Derivation<T2>::Derive(exp.m_rightOperand)*exp.m_leftOperand) / power<2>(exp.m_rightOperand);
+		}
+	};
+
+	template <typename T>
+	struct Derivation<Numeric<T>>
+	{
+		typedef typename Numeric<T> type;
+		static inline type Derive(const Numeric<T> & exp)
+		{
+			return Numeric<T>(0);
+		}
+	};
+
+	template <typename T, intmax_t N, intmax_t D>
+	struct Derivation<Constant<T,N,D>>
+	{
+		typedef typename Numeric<T> type;
+		static inline type Derive(const Constant<T, N, D> & exp)
+		{
+			return Numeric<T>(0);
+		}
+	};
+
+	template <typename T>
+	struct Derivation<FunctionExpression<Sinus, T>>
+	{
+		typedef typename BinarryExpression<Multiplication, FunctionExpression<Cosinus, T>, typename Derivation<T>::type> type;
+		static inline type Derive(const FunctionExpression<Sinus, T> & exp)
+		{
+			return 
+			{
+				cos(exp.m_operand),
+				Derivation<T>::Derive(exp.m_operand)
+			};
+		}
+	};
+
+	template <typename T>
+	struct Derivation<FunctionExpression<Cosinus, T>>
+	{
+		typedef typename BinarryExpression<Multiplication, FunctionExpression<Sinus, T>, typename Derivation<T>::type> type;
+		static inline type Derive(const FunctionExpression<Cosinus, T> & exp)
+		{
+			return
+			{
+				-sin(exp.m_operand),
+				Derivation<T>::Derive(exp.m_operand)
+			};
+		}
+	};
+
+	template <int p,typename T>
+	struct Derivation<PosfixExpression<Power<p>, T>>
+	{
+		typedef typename
+			BinarryExpression<
+				Multiplication,
+				BinarryExpression<
+					Multiplication,
+					Numeric<int>,
+					PosfixExpression<
+						Power<p-1>,
+						T>
+					>,
+				typename Derivation<T>::type
+			> type;
+		static inline type Derive(const PosfixExpression<Power<p>, T> & exp)
+		{
+			return
+			{
+				{ p, power<p - 1>(exp.m_operand) },
+				{ Derivation<T>::Derive(exp.m_operand) }
+			};
+		}
+	};
+
+	template <char id>
+	struct Derivation<Variable<id>>
+	{
+		typedef typename Numeric<int> type;
+		static inline type Derive(const Variable<id> & exp)
+		{
+			return{ 1 };
+		}
 	};
 
 	template <typename T>

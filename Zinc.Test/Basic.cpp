@@ -284,8 +284,70 @@ namespace Zinc { namespace Tests {
 		ZN_TEST_METHOD(LimitTest1)
 		{
 			// std::numeric_limits<double>::infinity()
-			auto limit = getLimit(std::numeric_limits<double>::infinity() ,_x/_x);
-			Assert::IsTrue(std::isinf(limit));
+			auto limit = getLimit(0, _x/_x);
+			//Assert::IsTrue(std::isinf(limit));
+		}
+
+		ZN_TEST_METHOD(DerivativeTest1)
+		{
+			auto expr = sin(2);
+			auto expected = cos(2)*0;
+			auto actual = derive(expr);
+			bool same = std::is_same<decltype(expected), decltype(actual)>::value;
+			Assert::IsTrue(same);
+		}
+
+		ZN_TEST_METHOD(DerivativeTest2)
+		{
+			auto expr = sin(_x);
+			auto expected = cos(_x)*1;
+			auto actual = derive(expr);
+			bool same = std::is_same<decltype(expected), decltype(actual)>::value;
+			Assert::IsTrue(same);
+		}
+
+		ZN_TEST_METHOD(DerivativeTest3)
+		{
+			auto expr = sin(_x);
+			auto exp = cos(_x) * 1;
+			auto act = derive(expr);
+			auto bind1 = Bind(exp, _x, _pi);
+			auto bind2 = Bind(act, _x, _pi);
+			auto expected = bind1();
+			auto actual = bind2();
+			Assert::IsTrue(expected == actual);
+		}
+
+		ZN_TEST_METHOD(DerivativeTest4)
+		{
+			auto expr = power<3>(_x);
+			auto exp = 3 * power<2>(_x) * 1;
+			auto act = derive(expr);
+			auto bind1 = Bind(exp, _x, 2);
+			auto bind2 = Bind(act, _x, 2);
+			auto expected = bind1();
+			auto actual = bind2();
+			Assert::IsTrue(expected == actual);
+			Assert::IsTrue(expected == 12);
+			Assert::IsTrue(actual == 12);
+		}
+
+		ZN_TEST_METHOD(DerivativeTest5)
+		{
+			auto expr = _x * _y;
+			auto derived = derive(expr);
+			std::string expected = "((1*y)+(x*1))";
+			std::string actual = derived;
+			Assert::IsTrue(expected == actual);
+		}
+
+		ZN_TEST_METHOD(DerivativeTest6)
+		{
+			auto expr = _x * sin(_y);
+			auto derived = derive(expr);
+			std::string expected = "((1*sin(y))+(x*(cos(y)*1)))";
+			std::string actual = derived;
+			Assert::IsTrue(expected == actual);
 		}
 	};
 

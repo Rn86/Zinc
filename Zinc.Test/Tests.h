@@ -8,6 +8,11 @@ namespace Zinc { namespace Tests {
 	class Assert
 	{
 	public:
+		static void IsTrue(bool & condition)
+		{
+			Microsoft::VisualStudio::CppUnitTestFramework::Assert::IsTrue(condition);
+		}
+
 		static void IsTrue(bool && condition)
 		{
 			Microsoft::VisualStudio::CppUnitTestFramework::Assert::IsTrue(condition);

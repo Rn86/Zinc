@@ -227,8 +227,6 @@ namespace Zinc { namespace Tests {
 			Assert::IsTrue(expected == actual);
 		}
 
-		//(((((-1)^1)/6)*((2)^3))+((((-1)^0)/1)*((2)^1)))
-
 		ZN_TEST_METHOD(ExpandIssue1)
 		{
 			auto expr = (power<1>(-1) / 6) * power<3>(2);
@@ -279,13 +277,6 @@ namespace Zinc { namespace Tests {
 			auto actual = expr();
 			std::string string = expr;
 			Assert::IsTrue(expected == actual);
-		}
-
-		ZN_TEST_METHOD(LimitTest1)
-		{
-			// std::numeric_limits<double>::infinity()
-			auto limit = getLimit(0, _x/_x);
-			//Assert::IsTrue(std::isinf(limit));
 		}
 
 		ZN_TEST_METHOD(DerivativeTest1)
@@ -348,6 +339,36 @@ namespace Zinc { namespace Tests {
 			std::string expected = "((1*sin(y))+(x*(cos(y)*1)))";
 			std::string actual = derived;
 			Assert::IsTrue(expected == actual);
+		}
+
+		ZN_TEST_METHOD(DerivativeTest7)
+		{
+			auto expr = _x / sin(_y);
+			auto derived = derive(expr);
+			std::string expected = "(((1*sin(y))-(x*(cos(y)*1)))/((sin(y))^2))";
+			std::string actual = derived;
+			Assert::IsTrue(expected == actual);
+		}
+
+		ZN_TEST_METHOD(LimTest1)
+		{
+			auto expr = _x / _x;
+			auto limit = lim(_x.to(0), expr);
+			Assert::IsTrue(limit == 1);
+		}
+
+		ZN_TEST_METHOD(LimTest2)
+		{
+			auto expr = _x / sin(_x);
+			auto limit = lim(_x.to(0), expr);
+			Assert::IsTrue(limit == 1);
+		}
+
+		ZN_TEST_METHOD(LimTest3)
+		{
+			auto expr = (sin(_x) - _x) / (_x * sin(_x));
+			auto limit = lim(_x.to(0), expr);
+			Assert::IsTrue(limit == 0);
 		}
 	};
 

@@ -29,6 +29,17 @@ namespace Zinc
 	template <class T>
 	struct Simplifier;
 
+	template <char id>
+	struct LimitParam
+	{
+		LimitParam(int to)
+			: m_to(to)
+		{
+		}
+
+		int m_to;
+	};
+
 	template <class T>
 	struct Expression
 	{
@@ -101,10 +112,16 @@ namespace Zinc
 		{
 			return std::string(1, id);
 		}
+
+		LimitParam<id> to(int to) const
+		{
+			return{ to };
+		}
 	};
 
 	static constexpr Constant<long double, 314159265358979, 100000000000000> _pi{};
 	static constexpr Constant<long double, 271828182845904, 100000000000000> _e{};
+	static constexpr Constant<int, 0> _0{};
 
 	template <>
 	struct TypeTraits<Constant<long double, 314159265358979, 100000000000000> >
@@ -788,19 +805,6 @@ namespace Zinc
 		}
 	};
 
-	template <typename T>
-	static auto getLimit(double value, const T& exp)
-	{
-
-		auto bind = Bind(exp, _x, value);
-
-		//auto gg = bind();
-		std::string aa = exp;
-
-		return aa;
-		//return (Bind(exp, _x, value))();
-	};
-
 	template <size_t terms, class T>
 	static inline auto expand(const T & exp)
 	{
@@ -884,11 +888,42 @@ namespace Zinc
 	template <class T1, class T2>
 	struct Derivation<BinarryExpression<Division, T1, T2>>
 	{
-		typedef typename BinarryExpression<Division, typename Derivation<T1>::type, typename Derivation<T2>::type> type;
+		typedef typename
+			BinarryExpression<
+				Division,
+				BinarryExpression<
+					Subtraction,
+					BinarryExpression<
+						Multiplication,
+						typename Derivation<T1>::type,
+						T2
+					>,
+					BinarryExpression<
+						Multiplication,
+						T1,
+						typename Derivation<T2>::type
+					>
+				>,
+				PosfixExpression<Power<2>, T2>
+			> type;
 		static inline type Derive(const BinarryExpression<Division, T1, T2> & exp)
 		{
 			return (Derivation<T1>::Derive(exp.m_leftOperand)*exp.m_rightOperand -
-				Derivation<T2>::Derive(exp.m_rightOperand)*exp.m_leftOperand) / power<2>(exp.m_rightOperand);
+				exp.m_leftOperand*Derivation<T2>::Derive(exp.m_rightOperand)) / power<2>(exp.m_rightOperand);
+		}
+	};
+
+	template <class Operator, class Operand>
+	struct Derivation<UnaryExpression<Operator, Operand> >
+	{
+		typedef typename
+			UnaryExpression<
+				Operator,
+				typename Derivation<Operand>::type
+			> type;
+		static inline type Derive(const UnaryExpression<Operator, Operand> & exp)
+		{
+			return{ Derivation<Operand>::Derive(exp.m_operand) };
 		}
 	};
 
@@ -929,7 +964,7 @@ namespace Zinc
 	template <typename T>
 	struct Derivation<FunctionExpression<Cosinus, T>>
 	{
-		typedef typename BinarryExpression<Multiplication, FunctionExpression<Sinus, T>, typename Derivation<T>::type> type;
+		typedef typename BinarryExpression<Multiplication, UnaryExpression<UnaryMinus, FunctionExpression<Sinus, T> >, typename Derivation<T>::type> type;
 		static inline type Derive(const FunctionExpression<Cosinus, T> & exp)
 		{
 			return
@@ -969,11 +1004,85 @@ namespace Zinc
 	struct Derivation<Variable<id>>
 	{
 		typedef typename Numeric<int> type;
-		static inline type Derive(const Variable<id> & exp)
+		static inline type Derive(const Variable<id> &)
 		{
 			return{ 1 };
 		}
 	};
+
+	template <class T>
+	struct Lopital
+	{
+		typedef T type;
+		static inline type Get(const T & expr)
+		{
+			return expr;
+		}
+	};
+
+	template <class T>
+	struct Lopital<Expression<T>>
+	{
+		typedef typename Lopital<T>::type type;
+		static inline type Get(const Expression<T> & expr)
+		{
+			return Lopital<T>::Get(expr());
+		}
+	};
+
+	template <class T1, class T2>
+	struct Lopital<BinarryExpression<Division, T1, T2> >
+	{
+		typedef BinarryExpression<
+			Division, 
+			typename Derivation<T1>::type,
+			typename Derivation<T2>::type
+		> type;
+		static inline type Get(const BinarryExpression<Division, T1, T2> & expr)
+		{
+			return{ Derivation<T1>::Derive(expr.m_leftOperand), Derivation<T2>::Derive(expr.m_rightOperand) };
+		}
+	};
+
+	template <class T>
+	static inline auto lopital(const T& expr)
+	{
+		return derive(expr);
+	}
+
+	template<char id, class T>
+	static inline long double lim(const LimitParam<id> && param, const Expression<T> & expr)
+	{
+		auto var = Variable<id>();
+		int to = param.m_to;
+		
+		long double result = 0;
+		auto bind1 = Bind(expr, var, to);
+		result = bind1();
+		if (!std::isnan(result)) return result;
+
+		auto derive2 = Lopital<T>::Get(expr());
+		auto bind2 = Bind(derive2, var, to);
+		result = bind2();
+		if (!std::isnan(result)) return result;
+
+		auto derive3 = Lopital<decltype(derive2)>::Get(derive2);
+		auto bind3 = Bind(derive3, var, to);
+		result = bind3();
+		if (!std::isnan(result)) return result;
+
+		auto derive4 = Lopital<decltype(derive3)>::Get(derive3);
+		auto bind4 = Bind(derive4, var, to);
+		result = bind4();
+		if (!std::isnan(result)) return result;
+
+		auto derive5 = Lopital<decltype(derive4)>::Get(derive4);
+		auto bind5 = Bind(derive5, var, to);
+		result = bind5();
+		if (!std::isnan(result)) return result;
+
+		return 0;
+	}
 
 	template <typename T>
 	static inline typename Simplifier<T>::type Simplify(const Expression<T> & expr)

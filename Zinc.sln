@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Zinc", "Zinc\Zinc.vcxproj",
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Zinc.Test", "Zinc.Test\Zinc.Test.vcxproj", "{D39662C5-676C-4FEA-87E1-0B85F9B59C47}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Zinc.Exe", "Zinc.Exe\Zinc.Exe.vcxproj", "{06B54350-0230-4440-B912-A2A7BD30248F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -31,6 +33,14 @@ Global
 		{D39662C5-676C-4FEA-87E1-0B85F9B59C47}.Release|x64.Build.0 = Release|x64
 		{D39662C5-676C-4FEA-87E1-0B85F9B59C47}.Release|x86.ActiveCfg = Release|Win32
 		{D39662C5-676C-4FEA-87E1-0B85F9B59C47}.Release|x86.Build.0 = Release|Win32
+		{06B54350-0230-4440-B912-A2A7BD30248F}.Debug|x64.ActiveCfg = Debug|x64
+		{06B54350-0230-4440-B912-A2A7BD30248F}.Debug|x64.Build.0 = Debug|x64
+		{06B54350-0230-4440-B912-A2A7BD30248F}.Debug|x86.ActiveCfg = Debug|Win32
+		{06B54350-0230-4440-B912-A2A7BD30248F}.Debug|x86.Build.0 = Debug|Win32
+		{06B54350-0230-4440-B912-A2A7BD30248F}.Release|x64.ActiveCfg = Release|x64
+		{06B54350-0230-4440-B912-A2A7BD30248F}.Release|x64.Build.0 = Release|x64
+		{06B54350-0230-4440-B912-A2A7BD30248F}.Release|x86.ActiveCfg = Release|Win32
+		{06B54350-0230-4440-B912-A2A7BD30248F}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

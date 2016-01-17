@@ -7,7 +7,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Zinc", "Zinc\Zinc.vcxproj",
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Zinc.Test", "Zinc.Test\Zinc.Test.vcxproj", "{D39662C5-676C-4FEA-87E1-0B85F9B59C47}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Zinc.Exe", "Zinc.Exe\Zinc.Exe.vcxproj", "{06B54350-0230-4440-B912-A2A7BD30248F}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Zinc.Exe", "Zinc.Executable\Zinc.Exe.vcxproj", "{06B54350-0230-4440-B912-A2A7BD30248F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -1,0 +1,1 @@
+g++ -std=c++14 -Wall -pedantic -O3 -o zinc.exe Zinc.cpp

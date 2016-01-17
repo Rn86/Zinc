@@ -1,5 +1,10 @@
 #include <stdafx.h>
 
+#ifdef _MSC_VER
+	#pragma warning( push )
+	#pragma warning( disable : 4503 )
+#endif
+
 namespace Zinc { namespace Tests {
 
 	ZN_TEST_CLASS(BasicTests)
@@ -35,17 +40,17 @@ namespace Zinc { namespace Tests {
 		ZN_TEST_METHOD(VariableBindExpressionA)
 		{
 			auto expr = (_a + (2 + _a) - 1) / (2 * _a + 1);
-			auto bind = Bind(expr, _a, 3);
+			auto rez = bind(expr, _a, 3);
 			std::string expected = "(((3+(2+3))-1)/((2*3)+1))";
-			std::string actual = bind;
+			std::string actual = rez;
 			Assert::IsTrue(expected == actual);
 		}
 
 		ZN_TEST_METHOD(VariableBindValue)
 		{
 			auto expr = (_a + (2 + _a) - _b) / (2 * _a + 1);
-			auto bind1 = Bind(expr, _a, 3);
-			auto bind2 = Bind(bind1, _b, 1);
+			auto bind1 = bind(expr, _a, 3);
+			auto bind2 = bind(bind1, _b, 1);
 			long double expected = 1;
 			long double actual = bind2();
 			Assert::IsTrue(expected == actual);
@@ -54,9 +59,9 @@ namespace Zinc { namespace Tests {
 		ZN_TEST_METHOD(VariableBindString)
 		{
 			auto expr = (_a + (2 + _a) - _b) / (2 * _a + 1);
-			auto bind = Bind(expr, _a, 3);
+			auto rez = bind(expr, _a, 3);
 			std::string expected = "(((3+(2+3))-b)/((2*3)+1))";
-			std::string actual = bind;
+			std::string actual = rez;
 			Assert::IsTrue(expected == actual);
 		}
 
@@ -72,17 +77,17 @@ namespace Zinc { namespace Tests {
 		ZN_TEST_METHOD(SinusExpressionValue)
 		{
 			auto expr = sin(_a) + _b;
-			auto bind = Bind(expr, _a, 2);
+			auto rez = bind(expr, _a, 2);
 			std::string expected = "(sin(2)+b)";
-			std::string actual = bind;
+			std::string actual = rez;
 			Assert::IsTrue(expected == actual);
 		}
 
 		ZN_TEST_METHOD(BindSinusValue)
 		{
 			auto expr = sin(_a) + _b;
-			auto bind1 = Bind(expr, _a, _pi);
-			auto bind2 = Bind(bind1, _b, -1);
+			auto bind1 = bind(expr, _a, _pi);
+			auto bind2 = bind(bind1, _b, -1);
 			long double expected = -1;
 			long double actual = bind2();
 			Assert::IsTrue(std::abs(expected - actual) < std::numeric_limits<float>::epsilon());
@@ -92,9 +97,9 @@ namespace Zinc { namespace Tests {
 		{
 			auto expr = _a + 1;
 			auto value = expr();
-			auto bind = Bind(value, _a, 2);
+			auto rez = bind(value, _a, 2);
 			int expected = 3;
-			int actual = bind();
+			int actual = rez();
 			Assert::IsTrue(expected == actual);
 		}
 
@@ -120,18 +125,18 @@ namespace Zinc { namespace Tests {
 		ZN_TEST_METHOD(BindCosinus)
 		{
 			auto expr = cos(_a) + _b;
-			auto bind = Bind(expr, _a, 2);
+			auto rez = bind(expr, _a, 2);
 			std::string expected = "(cos(2)+b)";
-			std::string actual = bind;
+			std::string actual = rez;
 			Assert::IsTrue(expected == actual);
 		}
 
 		ZN_TEST_METHOD(UnaryOperatorAdditionBind)
 		{
 			auto expr = ++_a;
-			auto bind = Bind(expr, _a, 2);
+			auto rez = bind(expr, _a, 2);
 			int expected = 3;
-			int actual = bind();
+			int actual = rez();
 			Assert::IsTrue(expected == actual);
 		}
 
@@ -146,9 +151,9 @@ namespace Zinc { namespace Tests {
 		ZN_TEST_METHOD(UnaryOperatorSubtractionBind)
 		{
 			auto expr = --_a;
-			auto bind = Bind(expr, _a, 2);
+			auto rez = bind(expr, _a, 2);
 			int expected = 1;
-			int actual = bind();
+			int actual = rez();
 			Assert::IsTrue(expected == actual);
 		}
 
@@ -163,9 +168,9 @@ namespace Zinc { namespace Tests {
 		ZN_TEST_METHOD(UnaryOperatorMinusBind)
 		{
 			auto expr = -_a;
-			auto bind = Bind(expr, _a, 2);
+			auto rez = bind(expr, _a, 2);
 			int expected = -2;
-			int actual = bind();
+			int actual = rez();
 			Assert::IsTrue(expected == actual);
 		}
 
@@ -180,18 +185,18 @@ namespace Zinc { namespace Tests {
 		ZN_TEST_METHOD(BindComplex)
 		{
 			auto expr = _a + 1;
-			auto bind = Bind(expr, _a, sin(_b));
+			auto rez = bind(expr, _a, sin(_b));
 			std::string expected = "(sin(b)+1)";
-			std::string actual = bind;
+			std::string actual = rez;
 			Assert::IsTrue(expected == actual);
 		}
 
 		ZN_TEST_METHOD(BindComplex2)
 		{
 			auto expr = _a + 1;
-			auto bind = Bind(expr, _a, sin(_b));
+			auto rez = bind(expr, _a, sin(_b));
 			std::string expected = "(sin(b)+1)";
-			std::string actual = bind;
+			std::string actual = rez;
 			Assert::IsTrue(expected == actual);
 		}
 
@@ -302,8 +307,8 @@ namespace Zinc { namespace Tests {
 			auto expr = sin(_x);
 			auto exp = cos(_x) * 1;
 			auto act = derive(expr);
-			auto bind1 = Bind(exp, _x, _pi);
-			auto bind2 = Bind(act, _x, _pi);
+			auto bind1 = bind(exp, _x, _pi);
+			auto bind2 = bind(act, _x, _pi);
 			auto expected = bind1();
 			auto actual = bind2();
 			Assert::IsTrue(expected == actual);
@@ -314,8 +319,8 @@ namespace Zinc { namespace Tests {
 			auto expr = power<3>(_x);
 			auto exp = 3 * power<2>(_x) * 1;
 			auto act = derive(expr);
-			auto bind1 = Bind(exp, _x, 2);
-			auto bind2 = Bind(act, _x, 2);
+			auto bind1 = bind(exp, _x, 2);
+			auto bind2 = bind(act, _x, 2);
 			auto expected = bind1();
 			auto actual = bind2();
 			Assert::IsTrue(expected == actual);
@@ -350,6 +355,25 @@ namespace Zinc { namespace Tests {
 			Assert::IsTrue(expected == actual);
 		}
 
+		ZN_TEST_METHOD(Simplification1)
+		{
+			auto expr = (_x + 2) / 2;
+			auto simple = simplify(expr);
+			std::string expected = "((x+2)/2)";
+			std::string actual = simple;
+			Assert::IsTrue(expected == actual);
+		}
+
+		ZN_TEST_METHOD(Simplification2)
+		{
+			auto _2 = Numeric<int>(2);
+			auto expr = (_2 + _2) - (_x / 2);
+			auto simple = simplify(expr);
+			std::string expected = "((((2+2)*2)-((x/2)*2))/2)";
+			std::string actual = simple;
+			Assert::IsTrue(expected == actual);
+		}
+
 		ZN_TEST_METHOD(LimTest1)
 		{
 			auto expr = _x / _x;
@@ -370,6 +394,61 @@ namespace Zinc { namespace Tests {
 			auto limit = lim(_x.to(0), expr);
 			Assert::IsTrue(limit == 0);
 		}
+
+		ZN_TEST_METHOD(LimTest4)
+		{
+			auto expr = _x + 2;
+			auto limit = lim(_x.to(1), expr);
+			Assert::IsTrue(limit == 3);
+		}
+
+		ZN_TEST_METHOD(LimitTest5)
+		{
+			auto _2 = Numeric<int>(2);
+			auto expr = (_2 + 2) - (_x / 2);
+			auto limit = lim(_x.to(4), expr);
+			Assert::IsTrue(limit == 2);
+		}
+
+		ZN_TEST_METHOD(LimitTest6)
+		{
+			auto expr = (power<2>(_x) - 1) / (_x - 1);
+			auto limit = lim(_x.to(1), expr);
+			Assert::IsTrue(limit == 2);
+		}
+
+		ZN_TEST_METHOD(LimitTest7)
+		{
+			auto expr = ((power<2>(_x) - 1) / (_x - 1)) - 1;
+			auto limit = lim(_x.to(1), expr);
+			Assert::IsTrue(limit == 1);
+		}
+
+		ZN_TEST_METHOD(LimitTest8)
+		{
+			auto expr = 1 / _x;
+			auto limit = lim(_x.to(1), expr);
+			Assert::IsTrue(limit == 1);
+		}
+
+		ZN_TEST_METHOD(LimitTest9)
+		{
+			auto expr = 1 / _x;
+			auto limit = lim(_x.to(0), expr);
+			Assert::IsTrue(limit == std::numeric_limits<long double>::infinity());
+		}
+
+		ZN_TEST_METHOD(LimitTest10)
+		{
+			auto expr = _x / _x;
+			auto limit = lim(_x.to(0), expr);
+			Assert::IsTrue(limit == 1);
+		}
 	};
 
 }}
+
+#ifdef _MSC_VER
+	#pragma warning( pop )
+#endif
+

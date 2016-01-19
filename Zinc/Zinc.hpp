@@ -865,17 +865,17 @@ namespace Zinc
 	{
 		typedef
 			BinarryExpression<
-			Addition,
-			BinarryExpression<
-			Multiplication,
-			typename Derivation<T1>::type,
-			T2
-			>,
-			BinarryExpression<
-			Multiplication,
-			T1,
-			typename Derivation<T2>::type
-			>
+				Addition,
+				BinarryExpression<
+					Multiplication,
+					typename Derivation<T1>::type,
+					T2
+				>,
+				BinarryExpression<
+					Multiplication,
+					T1,
+					typename Derivation<T2>::type
+				>
 			> type;
 		static inline type Derive(const BinarryExpression<Multiplication, T1, T2> & exp)
 		{
@@ -892,21 +892,21 @@ namespace Zinc
 	{
 		typedef
 			BinarryExpression<
-			Division,
-			BinarryExpression<
-			Subtraction,
-			BinarryExpression<
-			Multiplication,
-			typename Derivation<T1>::type,
-			T2
-			>,
-			BinarryExpression<
-			Multiplication,
-			T1,
-			typename Derivation<T2>::type
-			>
-			>,
-			PostfixExpression<Power<2>, T2>
+				Division,
+				BinarryExpression<
+					Subtraction,
+					BinarryExpression<
+						Multiplication,
+						typename Derivation<T1>::type,
+						T2
+					>,
+					BinarryExpression<
+						Multiplication,
+						T1,
+						typename Derivation<T2>::type
+					>
+				>,
+				PostfixExpression<Power<2>, T2>
 			> type;
 		static inline type Derive(const BinarryExpression<Division, T1, T2> & exp)
 		{
@@ -988,15 +988,16 @@ namespace Zinc
 	{
 		typedef
 			BinarryExpression<
-			Multiplication,
-			BinarryExpression<
-			Multiplication,
-			Numeric<int>,
-			PostfixExpression<
-			Power<p - 1>,
-			T>
-			>,
-			typename Derivation<T>::type
+				Multiplication,
+				BinarryExpression<
+					Multiplication,
+					Numeric<int>,
+					PostfixExpression<
+						Power<p - 1>,
+						T
+					>
+				>,
+				typename Derivation<T>::type
 			> type;
 		static inline type Derive(const PostfixExpression<Power<p>, T> & exp)
 		{
@@ -1144,27 +1145,27 @@ namespace Zinc
 		static constexpr bool value = false;
 		typedef typename FirstDivision<
 			typename DivisionSegregator<
-			LeftOperand,
-			RightOperand,
-			HasDivision<LeftOperand>::value,
-			HasDivision<RightOperand>::value
+				LeftOperand,
+				RightOperand,
+				HasDivision<LeftOperand>::value,
+				HasDivision<RightOperand>::value
 			>::type
 		>::type type;
 		static inline type Get(const BinarryExpression<Operator, LeftOperand, RightOperand> & expr)
 		{
 			return FirstDivision<
 				typename DivisionSegregator<
-				LeftOperand,
-				RightOperand,
-				HasDivision<LeftOperand>::value,
-				HasDivision<RightOperand>::value
+					LeftOperand,
+					RightOperand,
+					HasDivision<LeftOperand>::value,
+					HasDivision<RightOperand>::value
 				>::type
 			>::Get(
 				DivisionSegregator<
-				LeftOperand,
-				RightOperand,
-				HasDivision<LeftOperand>::value,
-				HasDivision<RightOperand>::value
+					LeftOperand,
+					RightOperand,
+					HasDivision<LeftOperand>::value,
+					HasDivision<RightOperand>::value
 				>::Get(expr.m_leftOperand, expr.m_rightOperand)
 				);
 		}
@@ -1218,17 +1219,17 @@ namespace Zinc
 		typedef BinarryExpression<
 			Division,
 			BinarryExpression<
-			O,
-			BinarryExpression<
-			Multiplication,
-			L1,
-			R2
-			>,
-			BinarryExpression<
-			Multiplication,
-			R1,
-			R2
-			>
+				O,
+				BinarryExpression<
+					Multiplication,
+					L1,
+					R2
+				>,
+				BinarryExpression<
+					Multiplication,
+					R1,
+					R2
+				>
 			>,
 			R2
 		> type;

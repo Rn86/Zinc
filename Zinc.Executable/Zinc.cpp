@@ -6,7 +6,7 @@ using namespace Zinc;
 
 int main()
 {
-	auto expr =
+	/*auto expr =
 		#include "expression"
 		;
 	auto limit = lim(_x.to(
@@ -21,6 +21,6 @@ int main()
 	else
 	{
 		return -1;
-	}
+	}*/
 	return 0;
 }

@@ -444,11 +444,6 @@ namespace Zinc { namespace Tests {
 			auto limit = lim(_x.to<0>(), expr);
 			Assert::IsTrue(limit == 1);
 		}
-
-		ZN_TEST_METHOD(PowTest1)
-		{
-			//auto expr = _x ^ 2;
-		}
 	};
 
 }}

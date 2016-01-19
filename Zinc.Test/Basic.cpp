@@ -377,28 +377,28 @@ namespace Zinc { namespace Tests {
 		ZN_TEST_METHOD(LimTest1)
 		{
 			auto expr = _x / _x;
-			auto limit = lim(_x.to(0), expr);
+			auto limit = lim(_x.to<0>(), expr);
 			Assert::IsTrue(limit == 1);
 		}
 
 		ZN_TEST_METHOD(LimTest2)
 		{
 			auto expr = _x / sin(_x);
-			auto limit = lim(_x.to(0), expr);
+			auto limit = lim(_x.to<0>(), expr);
 			Assert::IsTrue(limit == 1);
 		}
 
 		ZN_TEST_METHOD(LimTest3)
 		{
 			auto expr = (sin(_x) - _x) / (_x * sin(_x));
-			auto limit = lim(_x.to(0), expr);
+			auto limit = lim(_x.to<0>(), expr);
 			Assert::IsTrue(limit == 0);
 		}
 
 		ZN_TEST_METHOD(LimTest4)
 		{
 			auto expr = _x + 2;
-			auto limit = lim(_x.to(1), expr);
+			auto limit = lim(_x.to<1>(), expr);
 			Assert::IsTrue(limit == 3);
 		}
 
@@ -406,43 +406,48 @@ namespace Zinc { namespace Tests {
 		{
 			auto _2 = Numeric<int>(2);
 			auto expr = (_2 + 2) - (_x / 2);
-			auto limit = lim(_x.to(4), expr);
+			auto limit = lim(_x.to<4>(), expr);
 			Assert::IsTrue(limit == 2);
 		}
 
 		ZN_TEST_METHOD(LimitTest6)
 		{
 			auto expr = (power<2>(_x) - 1) / (_x - 1);
-			auto limit = lim(_x.to(1), expr);
+			auto limit = lim(_x.to<1>(), expr);
 			Assert::IsTrue(limit == 2);
 		}
 
 		ZN_TEST_METHOD(LimitTest7)
 		{
 			auto expr = ((power<2>(_x) - 1) / (_x - 1)) - 1;
-			auto limit = lim(_x.to(1), expr);
+			auto limit = lim(_x.to<1>(), expr);
 			Assert::IsTrue(limit == 1);
 		}
 
 		ZN_TEST_METHOD(LimitTest8)
 		{
 			auto expr = 1 / _x;
-			auto limit = lim(_x.to(1), expr);
+			auto limit = lim(_x.to<1>(), expr);
 			Assert::IsTrue(limit == 1);
 		}
 
 		ZN_TEST_METHOD(LimitTest9)
 		{
 			auto expr = 1 / _x;
-			auto limit = lim(_x.to(0), expr);
+			auto limit = lim(_x.to<0>(), expr);
 			Assert::IsTrue(limit == std::numeric_limits<long double>::infinity());
 		}
 
 		ZN_TEST_METHOD(LimitTest10)
 		{
 			auto expr = _x / _x;
-			auto limit = lim(_x.to(0), expr);
+			auto limit = lim(_x.to<0>(), expr);
 			Assert::IsTrue(limit == 1);
+		}
+
+		ZN_TEST_METHOD(PowTest1)
+		{
+			//auto expr = _x ^ 2;
 		}
 	};
 

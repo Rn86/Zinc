@@ -28,15 +28,9 @@ namespace Zinc
 	template <class T>
 	struct Derivation;
 
-	template <char id>
+	template <char id, int to>
 	struct LimitParam
 	{
-		LimitParam(int to)
-			: m_to(to)
-		{
-		}
-
-		int m_to;
 	};
 
 	template <class T>
@@ -115,15 +109,17 @@ namespace Zinc
 			return std::string(1, id);
 		}
 
-		LimitParam<id> to(int to) const
+		template <int to>
+		constexpr LimitParam<id, to> to() const
 		{
-			return{ to };
+			return{};
 		}
 	};
 
 	static constexpr Constant<long double, 314159265358979, 100000000000000> _pi{};
 	static constexpr Constant<long double, 271828182845904, 100000000000000> _e{};
-	static constexpr Constant<int, 0> _0{};
+
+	static constexpr Constant<long double, 0, 0> _nan{};
 
 	template <>
 	struct TypeTraits<Constant<long double, 314159265358979, 100000000000000> >
@@ -1293,187 +1289,104 @@ namespace Zinc
 		return Simplifier<T, typename FirstDivision<T>::type, FirstDivision<T>::value>::Simplify(expr, FirstDivision<T>::Get(expr));
 	}
 
-
-	template <typename T>
-	struct CanBeLimited
-	{
-		static inline bool Get(const T &)
-		{
-			return true;
-		}
-	};
-
-	template <typename T>
-	struct CanBeLimitedEx
-	{
-		static inline bool Get(const T & expr)
-		{
-			return CanBeLimited<T>::Get(expr);
-		}
-	};
-	template <>
-	struct CanBeLimitedEx<Numeric<int>>
-	{
-		static inline bool Get(const Numeric<int> & expr)
-		{
-			return expr.m_value != 0;
-		}
-	};
-
-	template <class Operator, class LeftOperand, class RightOperand>
-	struct CanBeLimited<BinarryExpression<Operator, LeftOperand, RightOperand>>
-	{
-		static inline bool Get(const BinarryExpression<Operator, LeftOperand, RightOperand> & expr)
-		{
-			return CanBeLimited<LeftOperand>::Get(expr.m_leftOperand) && CanBeLimited<RightOperand>::Get(expr.m_rightOperand);
-		}
-	};
-	template <class LeftOperand, class RightOperand>
-	struct CanBeLimited<BinarryExpression<Division, LeftOperand, RightOperand>>
-	{
-		static inline bool Get(const BinarryExpression<Division, LeftOperand, RightOperand> & expr)
-		{
-			return CanBeLimited<LeftOperand>::Get(expr.m_leftOperand) && CanBeLimitedEx<RightOperand>::Get(expr.m_rightOperand);
-		}
-	};
-	template <class Operator, class Operand>
-	struct CanBeLimited<UnaryExpression<Operator, Operand>>
-	{
-		static inline bool Get(const UnaryExpression<Operator, Operand> & expr)
-		{
-			return CanBeLimited<Operand>::Get(expr.m_operand);
-		}
-	};
-	template <class F, class T>
-	struct CanBeLimited<FunctionExpression<F, T>>
-	{
-		static inline bool Get(const FunctionExpression<F, T> & expr)
-		{
-			return CanBeLimited<T>::Get(expr.m_operand);
-		}
-	};
-	template <class Operator, class Operand>
-	struct CanBeLimited<PostfixExpression<Operator, Operand>>
-	{
-		static inline bool Get(const PostfixExpression<Operator, Operand> & expr)
-		{
-			return CanBeLimited<Operand>::Get(expr.m_operand);
-		}
-	};
-	template <class T>
-	struct CanBeLimited<Expression<T>>
-	{
-		static inline bool Get(const Expression<T> & expr)
-		{
-			return CanBeLimited<T>::Get(expr());
-		}
-	};
-
-	template <char id, class T, bool div>
+	template <char id, int to, class T, bool div>
 	struct Limit
 	{
-		static inline long double Get(const LimitParam<id> & param, const Expression<T> & expr)
+		static inline long double Get(const LimitParam<id, to> & param, const Expression<T> & expr)
 		{
 			auto var = Variable<id>();
-			int to = param.m_to;
 			auto binded = bind(expr, var, to);
 			return binded();
 		}
 	};
-	template <char id, class T>
-	struct Limit <id, T, true>
+	template <char id, int to, class T>
+	struct Limit<id, to, T, true>
 	{
-		static inline long double Get(const LimitParam<id> & param, const Expression<T> & expr)
+		static inline long double Get(const LimitParam<id, to> & param, const Expression<T> & expr)
 		{
 			auto var = Variable<id>();
-			int to = param.m_to;
 
 			long double result = 0;
 
 			auto derive1 = simplify(expr);
-			if (!CanBeLimited<decltype(derive1)>::Get(derive1)) return result;
 			auto bind1 = bind(derive1, var, to);
 			result = bind1();
-			if (!std::isnan(result)) return result;
+			if (!(result != result)) return result;
 
 			auto derive2 = lopital(derive1);
-			if (!CanBeLimited<decltype(derive2)>::Get(derive2)) return result;
 			auto bind2 = bind(derive2, var, to);
 			result = bind2();
-			if (!std::isnan(result)) return result;
+			if (!(result != result)) return result;
 
 			auto derive3 = lopital(derive2);
-			if (!CanBeLimited<decltype(derive3)>::Get(derive3)) return result;
 			auto bind3 = bind(derive3, var, to);
 			result = bind3();
-			if (!std::isnan(result)) return result;
+			if (!(result != result)) return result;
 
 			auto derive4 = lopital(derive3);
-			if (!CanBeLimited<decltype(derive4)>::Get(derive4)) return result;
 			auto bind4 = bind(derive4, var, to);
 			result = bind4();
-			if (!std::isnan(result)) return result;
+			if (!(result != result)) return result;
 
 			auto derive5 = lopital(derive4);
-			if (!CanBeLimited<decltype(derive5)>::Get(derive5)) return result;
 			auto bind5 = bind(derive5, var, to);
 			result = bind5();
-			if (!std::isnan(result)) return result;
+			if (!(result != result)) return result;
 
-			return 0;
+			return result;
 		}
 	};
 
-	template<char id, class T>
-	static inline long double lim(const LimitParam<id> && param, const Expression<T> & expr)
+	template<char id, int to, class T>
+	static inline constexpr long double lim(const LimitParam<id, to> && param, const Expression<T> & expr)
 	{
-		return Limit<id, T, HasDivision<T>::value>::Get(param, expr);
+		return Limit<id, to, T, HasDivision<T>::value>::Get(param, expr);
 	}
 
 	template <class T>
-	static inline UnaryExpression<UnaryMinus, T> operator-(const Expression<T>& value)
+	static inline constexpr UnaryExpression<UnaryMinus, T> operator-(const Expression<T>& value)
 	{
 		return UnaryExpression<UnaryMinus, T>(value());
 	}
 
 	template <class T>
-	static inline UnaryExpression<UnaryAddition, T> operator++(const Expression<T>& value)
+	static inline constexpr UnaryExpression<UnaryAddition, T> operator++(const Expression<T>& value)
 	{
 		return{ value() };
 	}
 
 	template <class T>
-	static inline UnaryExpression<UnarySubtraction, T> operator--(const Expression<T>& value)
+	static inline constexpr UnaryExpression<UnarySubtraction, T> operator--(const Expression<T>& value)
 	{
 		return{ value() };
 	}
 
 	template <class Lhs, class Rhs>
-	static inline BinarryExpression<Addition, typename ExpressionOperator<Lhs>::type, typename ExpressionOperator<Rhs>::type> operator+(const Lhs& d1, const Rhs& d2)
+	static inline constexpr BinarryExpression<Addition, typename ExpressionOperator<Lhs>::type, typename ExpressionOperator<Rhs>::type> operator+(const Lhs& d1, const Rhs& d2)
 	{
 		return{ ExpressionOperator<Lhs>::GetParam(d1), ExpressionOperator<Rhs>::GetParam(d2) };
 	}
 
 	template <class Lhs, class Rhs>
-	static inline BinarryExpression<Subtraction, typename ExpressionOperator<Lhs>::type, typename ExpressionOperator<Rhs>::type> operator-(const Lhs& d1, const Rhs& d2)
+	static inline constexpr BinarryExpression<Subtraction, typename ExpressionOperator<Lhs>::type, typename ExpressionOperator<Rhs>::type> operator-(const Lhs& d1, const Rhs& d2)
 	{
 		return{ ExpressionOperator<Lhs>::GetParam(d1), ExpressionOperator<Rhs>::GetParam(d2) };
 	}
 
 	template <class Lhs, class Rhs>
-	static inline BinarryExpression<Multiplication, typename ExpressionOperator<Lhs>::type, typename ExpressionOperator<Rhs>::type> operator*(const Lhs& d1, const Rhs& d2)
+	static inline constexpr BinarryExpression<Multiplication, typename ExpressionOperator<Lhs>::type, typename ExpressionOperator<Rhs>::type> operator*(const Lhs& d1, const Rhs& d2)
 	{
 		return{ ExpressionOperator<Lhs>::GetParam(d1), ExpressionOperator<Rhs>::GetParam(d2) };
 	}
 
 	template <class Lhs, class Rhs>
-	static inline BinarryExpression<Division, typename ExpressionOperator<Lhs>::type, typename ExpressionOperator<Rhs>::type> operator/(const Lhs& d1, const Rhs& d2)
+	static inline constexpr BinarryExpression<Division, typename ExpressionOperator<Lhs>::type, typename ExpressionOperator<Rhs>::type> operator/(const Lhs& d1, const Rhs& d2)
 	{
 		return{ ExpressionOperator<Lhs>::GetParam(d1), ExpressionOperator<Rhs>::GetParam(d2) };
 	}
 
 	template <typename T>
-	static inline auto operator^(const Constant<long double, 271828182845904, 100000000000000> &, const T & pow)
+	static inline constexpr auto operator^(const Constant<long double, 271828182845904, 100000000000000> &, const T & pow)
 	{
 		return TaylorE<CONFIDENCE_LEVEL, T>::Get(pow);
 	}

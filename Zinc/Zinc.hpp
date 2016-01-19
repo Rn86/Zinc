@@ -8,7 +8,7 @@
 
 namespace Zinc
 {
-	static constexpr int CONFIDENCE_LEVEL = 5;
+	static constexpr int CONFIDENCE_LEVEL = 100;
 
 	template <size_t terms, class T>
 	struct Expander;
@@ -719,7 +719,7 @@ namespace Zinc
 	{
 		static inline auto Get(const T & x)
 		{
-			return (power<terms + 1>(-1) / terms) * power<(terms)>(-1 + x);
+			return (power<terms + 1>(-1) / (long double)terms) * power<terms>(-1 + x);
 		}
 	};
 	template<size_t terms, typename T>

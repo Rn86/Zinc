@@ -8,7 +8,7 @@
 
 namespace Zinc
 {
-	static constexpr int CONFIDENCE_LEVEL = 100;
+	static constexpr int CONFIDENCE_LEVEL = 5;
 
 	template <size_t terms, class T>
 	struct Expander;
@@ -28,9 +28,15 @@ namespace Zinc
 	template <class T>
 	struct Derivation;
 
-	template <char id, int to>
+	template <char id, typename T>
 	struct LimitParam
 	{
+		LimitParam(const T & to)
+			: m_to(to)
+		{
+		}
+
+		T m_to;
 	};
 
 	template <class T>
@@ -85,7 +91,7 @@ namespace Zinc
 	template <typename T, intmax_t N, intmax_t D>
 	struct Constant : Expression<Constant<T, N, D> >
 	{
-		constexpr T operator()() const
+		T operator()() const
 		{
 			return (T)N / (T)D;
 		}
@@ -99,7 +105,7 @@ namespace Zinc
 	template <char id>
 	struct Variable : Expression<Variable<id> >
 	{
-		constexpr Variable<id> operator()() const
+		Variable<id> operator()() const
 		{
 			return{};
 		}
@@ -109,14 +115,15 @@ namespace Zinc
 			return std::string(1, id);
 		}
 
-		template <int to>
-		constexpr LimitParam<id, to> to() const
+		template <typename T>
+		LimitParam<id, T> to(const T & to) const
 		{
-			return{};
+			return{ to };
 		}
 	};
 
 	static constexpr Constant<long double, 314159265358979, 100000000000000> _pi{};
+	static constexpr Constant<long double, 628318530717958, 100000000000000> _2pi{};
 	static constexpr Constant<long double, 271828182845904, 100000000000000> _e{};
 
 	static constexpr Constant<long double, 0, 0> _nan{};
@@ -644,7 +651,7 @@ namespace Zinc
 	{
 		static inline auto Get(const T & x)
 		{
-			return (power<terms>(-1) / factorial<(2 * terms) + 1>()) * power<(2 * terms) + 1>(x);
+			return (power<terms>(-1) / (long double)factorial<(2 * terms) + 1>()) * power<(2 * terms) + 1>(x);
 		}
 	};
 	template<size_t terms, typename T>
@@ -669,7 +676,7 @@ namespace Zinc
 	{
 		static inline auto Get(const T & x)
 		{
-			return (power<terms>(-1) / factorial<(2 * terms)>()) * power<(2 * terms)>(x);
+			return (power<terms>(-1) / (long double)factorial<(2 * terms)>()) * power<(2 * terms)>(x);
 		}
 	};
 	template<size_t terms, typename T>
@@ -694,7 +701,7 @@ namespace Zinc
 	{
 		static inline auto Get(const T & x)
 		{
-			return power<(terms)>(x) / factorial<(terms)>();
+			return power<terms>(x) / (long double)factorial<terms>();
 		}
 	};
 	template<size_t terms, typename T>
@@ -714,12 +721,28 @@ namespace Zinc
 		}
 	};
 
+	template <typename T, bool fund>
+	struct TypeToFloatBase
+	{
+		typedef T type;
+	};
+	template <typename T>
+	struct TypeToFloatBase<T, true>
+	{
+		typedef double long type;
+	};
+
+	template <typename T>
+	struct TypeToFloat : TypeToFloatBase<T, std::is_fundamental<T>::value>
+	{
+	};
+
 	template <size_t terms, typename T>
 	struct TaylorLnTerm
 	{
 		static inline auto Get(const T & x)
 		{
-			return (power<terms + 1>(-1) / (long double)terms) * power<terms>(-1 + x);
+			return 2 * (power<(2*terms)-1>((x-1)/(x+1)) / ((2 * terms) - 1));
 		}
 	};
 	template<size_t terms, typename T>
@@ -742,8 +765,45 @@ namespace Zinc
 	template <typename T>
 	static inline auto ln(const T & value)
 	{
-		return TaylorLn<CONFIDENCE_LEVEL, T>::Get(value);
+		return TaylorLn<
+			CONFIDENCE_LEVEL,
+			typename TypeToFloat<T>::type
+		>::Get((typename TypeToFloat<T>::type)value);
 	}
+
+	template <class T, bool numeric>
+	struct RadianReductionBase
+	{
+		typedef long double type;
+		static inline type Get(type value)
+		{
+			if (value > _pi())
+			{
+				value -= _2pi();
+				return Get(value);
+			}
+			else if (value < -_pi())
+			{
+				value += _2pi();
+				return Get(value);
+			}
+			else return value;
+		}
+	};
+	template <class T>
+	struct RadianReductionBase<T, false>
+	{
+		typedef T type;
+		static inline type Get(type & value)
+		{
+			return value;
+		}
+	};
+
+	template <class T>
+	struct RadianReduction : RadianReductionBase<T, std::is_fundamental<T>::value>
+	{
+	};
 
 	struct Sinus
 	{
@@ -751,7 +811,20 @@ namespace Zinc
 		template <typename T>
 		auto operator()(const T && operand) const
 		{
-			return Expander<CONFIDENCE_LEVEL, FunctionExpression<Sinus, T>>::Expand(operand)();
+			T oper = operand;
+			return Expander<
+				CONFIDENCE_LEVEL,
+				FunctionExpression<
+					Sinus,
+					typename RadianReduction<
+						T
+					>::type
+				>
+			>::Expand(
+				RadianReduction<
+					T
+				>::Get(oper)
+			)();
 		}
 
 		operator std::string() const
@@ -766,7 +839,20 @@ namespace Zinc
 		template <typename T>
 		auto operator()(const T && operand) const
 		{
-			return Expander<CONFIDENCE_LEVEL, FunctionExpression<Cosinus, T>>::Expand(operand)();
+			T oper = operand;
+			return Expander<
+				CONFIDENCE_LEVEL,
+				FunctionExpression<
+					Cosinus,
+					typename RadianReduction<
+						T
+					>::type
+				>
+			>::Expand(
+				RadianReduction<
+				T
+				>::Get(oper)
+			)();
 		}
 
 		operator std::string() const
@@ -800,7 +886,14 @@ namespace Zinc
 	{
 		static inline auto Expand(const FunctionExpression<Sinus, T> & exp)
 		{
-			return TaylorSine<terms, T>::Get(exp.m_operand);
+			return TaylorSine<
+				terms,
+				typename TypeToFloat<
+					T
+				>::type
+			>::Get(
+				(typename TypeToFloat<T>::type)exp.m_operand
+			);
 		}
 	};
 	template <size_t terms, class T>
@@ -808,7 +901,14 @@ namespace Zinc
 	{
 		static inline auto Expand(const FunctionExpression<Cosinus, T> & exp)
 		{
-			return TaylorCosine<terms, T>::Get(exp.m_operand);
+			return TaylorCosine<
+				terms,
+				typename TypeToFloat<
+					T
+				>::type
+			>::Get(
+				(typename TypeToFloat<T>::type)exp.m_operand
+			);
 		}
 	};
 
@@ -1193,9 +1293,19 @@ namespace Zinc
 	template <class F, class T>
 	struct FirstDivision<FunctionExpression<F, T>>
 	{
-		static constexpr bool value = false;
+		static constexpr bool value = true;
 		typedef typename FirstDivision<T>::type type;
 		static inline type Get(const FunctionExpression<F, T> & expr)
+		{
+			return FirstDivision<T>::Get(expr.m_operand);
+		}
+	};
+	template <class F, class T>
+	struct FirstDivision<PostfixExpression<F, T>>
+	{
+		static constexpr bool value = true;
+		typedef typename FirstDivision<T>::type type;
+		static inline type Get(const PostfixExpression<F, T> & expr)
 		{
 			return FirstDivision<T>::Get(expr.m_operand);
 		}
@@ -1290,47 +1400,47 @@ namespace Zinc
 		return Simplifier<T, typename FirstDivision<T>::type, FirstDivision<T>::value>::Simplify(expr, FirstDivision<T>::Get(expr));
 	}
 
-	template <char id, int to, class T, bool div>
+	template <char id, typename toT, class T, bool div>
 	struct Limit
 	{
-		static inline long double Get(const LimitParam<id, to> & param, const Expression<T> & expr)
+		static inline long double Get(const LimitParam<id, toT> & param, const Expression<T> & expr)
 		{
 			auto var = Variable<id>();
-			auto binded = bind(expr, var, to);
+			auto binded = bind(expr, var, param.m_to);
 			return binded();
 		}
 	};
-	template <char id, int to, class T>
-	struct Limit<id, to, T, true>
+	template <char id, typename toT, class T>
+	struct Limit<id, toT, T, true>
 	{
-		static inline long double Get(const LimitParam<id, to> & param, const Expression<T> & expr)
+		static inline long double Get(const LimitParam<id, toT> & param, const Expression<T> & expr)
 		{
 			auto var = Variable<id>();
 
 			long double result = 0;
 
 			auto derive1 = simplify(expr);
-			auto bind1 = bind(derive1, var, to);
+			auto bind1 = bind(derive1, var, param.m_to);
 			result = bind1();
 			if (!(result != result)) return result;
 
 			auto derive2 = lopital(derive1);
-			auto bind2 = bind(derive2, var, to);
+			auto bind2 = bind(derive2, var, param.m_to);
 			result = bind2();
 			if (!(result != result)) return result;
 
 			auto derive3 = lopital(derive2);
-			auto bind3 = bind(derive3, var, to);
+			auto bind3 = bind(derive3, var, param.m_to);
 			result = bind3();
 			if (!(result != result)) return result;
 
 			auto derive4 = lopital(derive3);
-			auto bind4 = bind(derive4, var, to);
+			auto bind4 = bind(derive4, var, param.m_to);
 			result = bind4();
 			if (!(result != result)) return result;
 
 			auto derive5 = lopital(derive4);
-			auto bind5 = bind(derive5, var, to);
+			auto bind5 = bind(derive5, var, param.m_to);
 			result = bind5();
 			if (!(result != result)) return result;
 
@@ -1338,58 +1448,52 @@ namespace Zinc
 		}
 	};
 
-	template<char id, int to, class T>
-	static inline constexpr long double lim(const LimitParam<id, to> && param, const Expression<T> & expr)
+	template<char id, typename toT, class T>
+	static inline long double lim(const LimitParam<id, toT> && param, const Expression<T> & expr)
 	{
-		return Limit<id, to, T, HasDivision<T>::value>::Get(param, expr);
+		return Limit<id, toT, T, HasDivision<T>::value>::Get(param, expr);
 	}
 
 	template <class T>
-	static inline constexpr UnaryExpression<UnaryMinus, T> operator-(const Expression<T>& value)
+	static inline UnaryExpression<UnaryMinus, T> operator-(const Expression<T>& value)
 	{
 		return UnaryExpression<UnaryMinus, T>(value());
 	}
 
 	template <class T>
-	static inline constexpr UnaryExpression<UnaryAddition, T> operator++(const Expression<T>& value)
+	static inline UnaryExpression<UnaryAddition, T> operator++(const Expression<T>& value)
 	{
 		return{ value() };
 	}
 
 	template <class T>
-	static inline constexpr UnaryExpression<UnarySubtraction, T> operator--(const Expression<T>& value)
+	static inline UnaryExpression<UnarySubtraction, T> operator--(const Expression<T>& value)
 	{
 		return{ value() };
 	}
 
 	template <class Lhs, class Rhs>
-	static inline constexpr BinarryExpression<Addition, typename ExpressionOperator<Lhs>::type, typename ExpressionOperator<Rhs>::type> operator+(const Lhs& d1, const Rhs& d2)
+	static inline BinarryExpression<Addition, typename ExpressionOperator<Lhs>::type, typename ExpressionOperator<Rhs>::type> operator+(const Lhs& d1, const Rhs& d2)
 	{
 		return{ ExpressionOperator<Lhs>::GetParam(d1), ExpressionOperator<Rhs>::GetParam(d2) };
 	}
 
 	template <class Lhs, class Rhs>
-	static inline constexpr BinarryExpression<Subtraction, typename ExpressionOperator<Lhs>::type, typename ExpressionOperator<Rhs>::type> operator-(const Lhs& d1, const Rhs& d2)
+	static inline BinarryExpression<Subtraction, typename ExpressionOperator<Lhs>::type, typename ExpressionOperator<Rhs>::type> operator-(const Lhs& d1, const Rhs& d2)
 	{
 		return{ ExpressionOperator<Lhs>::GetParam(d1), ExpressionOperator<Rhs>::GetParam(d2) };
 	}
 
 	template <class Lhs, class Rhs>
-	static inline constexpr BinarryExpression<Multiplication, typename ExpressionOperator<Lhs>::type, typename ExpressionOperator<Rhs>::type> operator*(const Lhs& d1, const Rhs& d2)
+	static inline BinarryExpression<Multiplication, typename ExpressionOperator<Lhs>::type, typename ExpressionOperator<Rhs>::type> operator*(const Lhs& d1, const Rhs& d2)
 	{
 		return{ ExpressionOperator<Lhs>::GetParam(d1), ExpressionOperator<Rhs>::GetParam(d2) };
 	}
 
 	template <class Lhs, class Rhs>
-	static inline constexpr BinarryExpression<Division, typename ExpressionOperator<Lhs>::type, typename ExpressionOperator<Rhs>::type> operator/(const Lhs& d1, const Rhs& d2)
+	static inline BinarryExpression<Division, typename ExpressionOperator<Lhs>::type, typename ExpressionOperator<Rhs>::type> operator/(const Lhs& d1, const Rhs& d2)
 	{
 		return{ ExpressionOperator<Lhs>::GetParam(d1), ExpressionOperator<Rhs>::GetParam(d2) };
-	}
-
-	template <typename T>
-	static inline constexpr auto operator^(const Constant<long double, 271828182845904, 100000000000000> &, const T & pow)
-	{
-		return TaylorE<CONFIDENCE_LEVEL, T>::Get(pow);
 	}
 }
 
